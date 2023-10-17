@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Content Fetcher</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="max-w-md p-4 bg-white rounded-lg shadow-md">
+        <h1 class="text-2xl font-semibold mb-4">URL Content Fetcher</h1>
+        <div class="mb-4">
+            <label for="urlInput" class="block text-gray-700 font-semibold mb-2">Enter URL:</label>
+            <input id="urlInput" type="text" class="w-full border border-gray-300 rounded p-2">
+        </div>
+        <button id="refreshButton" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">Refresh</button>
+        <div class="mt-4">
+            <label class="block text-gray-700 font-semibold mb-2">Fetched Content:</label>
+            <textarea id="textContent" class="w-full border border-gray-300 rounded p-2" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const refreshButton = document.getElementById('refreshButton');
+        const textContent = document.getElementById('textContent');
+
+        // Function to fetch content from a URL
+        const fetchURLContent = async (url) => {
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                return text;
+            } catch (error) {
+                return `Error fetching content: ${error}`;
+            }
+        };
+
+        // Check for query parameter and fetch content
+        const queryString = window.location.search;
+        const urlParam = new URLSearchParams(queryString).get('url');
+        if (urlParam) {
+            urlInput.value = urlParam;
+            fetchURLContent(urlParam).then((content) => {
+                textContent.value = content;
+            });
+        }
+
+        // Add a click event listener to the Refresh button
+        refreshButton.addEventListener('click', async () => {
+            const url = urlInput.value;
+            if (url) {
+                const content = await fetchURLContent(url);
+                textContent.value = content;
+            }
+        });
+    </script>
+</body>
+</html>

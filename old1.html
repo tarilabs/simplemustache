@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-semibold mb-4">Dynamic Form</h1>
+        <form id="dynamicForm" class="space-y-4">
+            <div id="formFields">
+                <!-- Textfields will be dynamically generated here -->
+            </div>
+            <button id="generateJSON" class="bg-blue-500 text-white p-2 rounded">OK</button>
+        </form>
+        <div id="jsonResult" class="mt-4"></div>
+    </div>
+
+    <script>
+        const words = ['spray', 'limit', 'elite', 'exuberant', 'destruction', 'present'];
+
+        const formFields = document.getElementById('formFields');
+        const dynamicForm = document.getElementById('dynamicForm');
+        const generateJSON = document.getElementById('generateJSON');
+        const jsonResult = document.getElementById('jsonResult');
+
+        words.forEach(word => {
+            const textField = document.createElement('input');
+            textField.className = 'border rounded w-full p-2';
+            textField.setAttribute('type', 'text');
+            textField.setAttribute('placeholder', word);
+            textField.setAttribute('name', word);
+            formFields.appendChild(textField);
+        });
+
+        generateJSON.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent the default form submission behavior
+
+            const formData = new FormData(dynamicForm);
+            const jsonObject = {};
+
+            for (const [name, value] of formData.entries()) {
+                jsonObject[name] = value;
+            }
+
+            jsonResult.innerText = JSON.stringify(jsonObject, null, 2);
+        });
+    </script>
+</body>
+</html>
