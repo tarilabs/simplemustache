@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Mustache render</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.7/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mustache@4.0.1/mustache.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="w-full h-screen flex flex-col flex-grow">
+        <div class="px-12 rounded-md mb-4">
+            <h1 class="text-4xl font-semibold text-center p-4">
+                Simple Mustache render
+            </h1>
+        </div>
+        <!-- Upper Panel -->
+        <div class="px-14 rounded-md mb-4">
+            <div class="flex items-center">
+                <input id="urlInput" type="text" class="border border-gray-400 px-3 py-2 w-2/3 rounded-l-md"
+                    placeholder="mustache template URL">
+                <button id="refreshButton" class="bg-blue-500 text-white px-4 py-2 rounded-r-md">Refresh</button>
+            </div>
+        </div>
+
+        <!-- Two Columns -->
+        <div class="grow w-full flex flex-grow flex-row px-6">
+            <!-- Left Column -->
+            <div class="w-1/2 p-4">
+                <form id="dynamicForm" class="bg-white p-4 rounded-md shadow-md">
+                    <div id="formFields">
+                        <!-- will be replaced
+                        <div class="mb-4">
+                            <label for="username" class="block text-gray-600 font-bold mb-2">Username</label>
+                            <input type="text" id="username" class="border border-gray-300 rounded-md w-full py-2 px-3"
+                                placeholder="Enter your username">
+                        </div>
+                        <div class="mb-4">
+                            <label for="age" class="block text-gray-600 font-bold mb-2">Age</label>
+                            <input type="text" id="age" class="border border-gray-300 rounded-md w-full py-2 px-3"
+                                placeholder="Enter your age">
+                        </div>
+                        -->
+                    </div>
+                    <button id="generateJSON" class="bg-blue-500 text-white px-4 py-2 rounded-md">Render</button>
+                </form>
+            </div>
+
+            <!-- Right Column -->
+            <div class="w-1/2 p-4 flex flex-col">
+                <div class="grid justify-items-end">
+                    <button id="copyButton" class="bg-blue-500 text-white px-4 py-2 rounded-md">Copy to
+                        Clipboard</button>
+                </div>
+                <textarea id="textArea" class="border border-gray-300 rounded-md w-full h-full p-3" readonly
+                    placeholder="Select a mustache template in URL bar"></textarea>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="bg-black text-white text-center p-4 bottom-0 w-full">
+            Simple Mustache render &copy; 2023 by <a class="underline"
+                href="https://www.youtube.com/@MatteoMortari">Matteo
+                Mortari</a>.
+            Source code and licensing: <a class="underline" href="https://github.com/tarilabs/simplemustache">GitHub
+                tarilabs/simplemustache</a>
+        </div>
+    </div>
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const refreshButton = document.getElementById('refreshButton');
+        const textContent = document.getElementById('textArea');
+        const formFields = document.getElementById('formFields');
+        const dynamicForm = document.getElementById('dynamicForm');
+        const generateJSON = document.getElementById('generateJSON');
+        var mustacheTemplate = "";
+
+        // Function to fetch content from a URL, notice github raw support CORS :)
+        const fetchURLContent = async (url) => {
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                return text;
+            } catch (error) {
+                return `Error fetching content: ${error}`;
+            }
+        };
+
+        // Check for query parameter and fetch content
+        const queryString = window.location.search;
+        const urlParam = new URLSearchParams(queryString).get('url');
+        if (urlParam) {
+            urlInput.value = urlParam;
+            fetchURLContent(urlParam).then((content) => {
+                mustacheTemplate = content;
+                updateForm();
+            });
+        }
+
+        // Add a click event listener to the Refresh button
+        refreshButton.addEventListener('click', async () => {
+            const url = urlInput.value;
+            if (url) {
+                const content = await fetchURLContent(url);
+                mustacheTemplate = content;
+                updateForm();
+            }
+        });
+
+        function updateForm() {
+            var parsed = Mustache.parse(mustacheTemplate).filter((item) => item[0] == "name").map((item) => item[1])
+            parsed.forEach(word => {
+                const textField = document.createElement('input');
+                textField.className = 'border rounded w-full p-2';
+                textField.setAttribute('type', 'text');
+                textField.setAttribute('placeholder', word);
+                textField.setAttribute('name', word);
+                textField.addEventListener("keyup", updateRender); // trigger render every time a textfield is updated
+                formFields.appendChild(textField);
+            });
+            updateRender();
+        }
+
+        function updateRender() {
+            const formData = new FormData(dynamicForm);
+            const jsonObject = {};
+
+            for (const [name, value] of formData.entries()) {
+                jsonObject[name] = value == null || value === "" ? `{{${name}}}` : value;
+            }
+
+            const rendered = Mustache.render(mustacheTemplate, jsonObject);
+            textContent.value = rendered;
+        }
+
+        generateJSON.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent the default form submission behavior
+            updateRender();
+        });
+
+        document.getElementById('copyButton').addEventListener('click', function () {
+            const textArea = document.getElementById('textArea');
+            textArea.select();
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            textArea.blur();
+            const originalLabel = this.innerText;
+            this.innerText = 'Copied!';
+            setTimeout(() => {
+                this.innerText = originalLabel;
+            }, 1500); // Reset label after 1.5 seconds
+        });
+    </script>
+</body>
+
+</html>
